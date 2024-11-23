@@ -129,10 +129,15 @@ for (i in seq_along(modeles)) {
   variableGauche <- formuleGauche(donnees_modele[[modeles[[i]]$variableGauche]])
   
   model <- lm(variableGauche ~ variableDroite, data = donnees_modele)
+  coefficientCorrelation <- summary(model)$r.squared
+  cat("Le coefficient de détermination R^2 est :", coefficientCorrelation, "\n")
   
   ## ------- c) 1: -------
   b <- coef(model)[2]
   a <- coef(model)[1]
+  coefficientsRegression <- data.frame(a = as.numeric(a), b = as.numeric(b))
+  
+  print(coefficientsRegression)
   
   b0 <- modeles[[i]]$transformation_B0(a)
   b1 <- b
@@ -166,7 +171,8 @@ for (i in seq_along(modeles)) {
   } else {
     cat("Les résidus NE suivent PAS une distribution normale au seuil", normalitePValue)
   }
-  qqnorm(residus, main = c("Normalité des résidus - Modele", i), xlab = NULL, ylab = NULL)
+  
+  qqnorm(residus, main = c("Normalité des résidus - Modele", i), xlab = modeles[[i]]$variableDroite, ylab = modeles[[i]]$variableGauche)
   qqline(residus, col = "red", lwd = 2)
   
   ## Test/Analyse de l'homoscédasticité
@@ -174,9 +180,9 @@ for (i in seq_along(modeles)) {
   bp_test <- bptest(model)
   varianceConstante <- bp_test$p.value >= seuilHomoscédasticitéPValue;
   if (varianceConstante) {
-    cat("\nLa variance est constante au seuil", seuilHomoscédasticitéPValue)
+    cat("\nLa variance est constante au seuil", bp_test$p.value)
   } else {
-    cat("\nLa variance N'est PAS constante au seuil", seuilHomoscédasticitéPValue)
+    cat("\nLa variance N'est PAS constante au seuil", bp_test$p.value)
   }
   valeurs_predites <- fitted(model)
   plot(valeurs_predites, residus, 
@@ -205,11 +211,13 @@ for (i in seq_along(modeles)) {
   
   analyseModeles <- rbind(analyseModeles, data.frame(b0 = b0,
                                                      b1 = b1,
+                                                     r2 = coefficientCorrelation,
                                                      accepteVariance = accepteVariance,
                                                      pValueVariance = analyseVariance[["Pr(>F)"]][1],
                                                      residueNormaux = residuNormalementDistribue,
                                                      pValueNormalite = normalitePValue,
-                                                     varianceConstante = varianceConstante))
+                                                     varianceConstante = varianceConstante,
+                                                     pValueConstance = bp_test$p.value))
   rownames(analyseModeles)[nrow(analyseModeles)] <- i
   
   plot(formuleDroite(donnees_modele[[modeles[[i]]$variableDroite]]),
@@ -226,7 +234,7 @@ for (i in seq_along(modeles)) {
 donnesPrediction <- data.frame(X1 = 115, X2 = 35, X3 = 1)
 
 
-numeroModeleChoisi = 1 # À déterminer selon notre analyse
+numeroModeleChoisi = 1
 
 b0 <- analyseModeles$b0[[numeroModeleChoisi]]
 b1 <- analyseModeles$b1[[numeroModeleChoisi]]
@@ -247,6 +255,5 @@ Sxx <- sum((donnees_modele[[modeles[[numeroModeleChoisi]]$variableDroite]] - xba
 
 intervalePrediction <- qt(1 - 0.05 / 2, df = n - 2) * sqrt(mse * (1 + 1/n + (x - xbar)^2 / Sxx))
 cat("Lower bound", prediction - intervalePrediction, "Upper bound", prediction + intervalePrediction,"Prediction",  prediction)
-
 
 
