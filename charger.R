@@ -246,7 +246,6 @@ xbar <- mean(donnees_modele[[modeles[[numeroModeleChoisi]]$variableDroite]])
 Sxx <- sum((donnees_modele[[modeles[[numeroModeleChoisi]]$variableDroite]] - xbar)^2)
 
 intervalePrediction <- qt(1 - 0.05 / 2, df = n - 2) * sqrt(mse * (1 + 1/n + (x - xbar)^2 / Sxx))
-intervalePrediction - 
 cat("Lower bound", prediction - intervalePrediction, "Upper bound", prediction + intervalePrediction,"Prediction",  prediction)
 
 
