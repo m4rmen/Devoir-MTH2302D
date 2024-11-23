@@ -215,9 +215,7 @@ for (i in seq_along(modeles)) {
   
   plot(formuleDroite(donnees_modele[[modeles[[i]]$variableDroite]]),
        formuleGauche(donnees_modele[[modeles[[i]]$variableGauche]]), 
-       main = "Sales vs Price", 
-       xlab = "Price", 
-       ylab = "Sales", 
+       main = c("Analyse Linéaire - Modele", i),
        pch = 19, col = "blue")
   
   abline(a, b, col = "red", lwd = 2)
