@@ -102,21 +102,21 @@ square <- function(x) {
 
 modeles <- list(
   ## modele 1
-  list(variableGauche="Y", variableDroite="X1", formuleGauche=identity, formuleDroite=identity, transformation_B0=identity),
+  list(variableGauche="Y", variableDroite="X1", formuleGauche=identity, formuleDroite=identity, transformation_B0=identity, formule = function (b0, b1, x) { return(b0 + b1 * x) }),
   ## modele 2
-  list(variableGauche="Y", variableDroite="X2", formuleGauche=identity, formuleDroite=identity, transformation_B0=identity),
+  list(variableGauche="Y", variableDroite="X2", formuleGauche=identity, formuleDroite=identity, transformation_B0=identity, formule = function (b0, b1, x) { return(b0 + b1 * x) }),
   ## modele 3
-  list(variableGauche="Y", variableDroite="X1", formuleGauche=identity, formuleDroite=square, transformation_B0=identity),
+  list(variableGauche="Y", variableDroite="X1", formuleGauche=identity, formuleDroite=square, transformation_B0=identity, formule = function (b0, b1, x) { return(b0 + b1 * (x ^2)) }),
   ## modele 4
-  list(variableGauche="Y", variableDroite="X2", formuleGauche=identity, formuleDroite=square, transformation_B0=identity),
+  list(variableGauche="Y", variableDroite="X2", formuleGauche=identity, formuleDroite=square, transformation_B0=identity, formule = function (b0, b1, x) { return(b0 + b1 * (x ^2)) }),
   ## modele 5
-  list(variableGauche="Y", variableDroite="X1", formuleGauche=log, formuleDroite=identity, transformation_B0=exp),
+  list(variableGauche="Y", variableDroite="X1", formuleGauche=log, formuleDroite=identity, transformation_B0=exp, formule = function (b0, b1, x) { return(b0 * exp(b1 * x))}),
   ## modele 6
-  list(variableGauche="Y", variableDroite="X2", formuleGauche=log, formuleDroite=identity, transformation_B0=exp),
+  list(variableGauche="Y", variableDroite="X2", formuleGauche=log, formuleDroite=identity, transformation_B0=exp, formule = function (b0, b1, x) { return(b0 * exp(b1 * x))}),
   ## modele 7
-  list(variableGauche="Y", variableDroite="X1", formuleGauche=log, formuleDroite=log, transformation_B0=exp),
+  list(variableGauche="Y", variableDroite="X1", formuleGauche=log, formuleDroite=log, transformation_B0=exp, formule = function (b0, b1, x) { return(b0 * (x^ b1))}),
   ## modele 8
-  list(variableGauche="Y", variableDroite="X2", formuleGauche=log, formuleDroite=log, transformation_B0=exp)
+  list(variableGauche="Y", variableDroite="X2", formuleGauche=log, formuleDroite=log, transformation_B0=exp, formule = function (b0, b1, x) { return(b0 * (x ^ b1))})
 )
 
 analyseModeles <- data.frame()
@@ -209,8 +209,7 @@ for (i in seq_along(modeles)) {
                                                      pValueVariance = analyseVariance[["Pr(>F)"]][1],
                                                      residueNormaux = residuNormalementDistribue,
                                                      pValueNormalite = normalitePValue,
-                                                     varianceConstante = varianceConstante,
-                                                     pValueHomoscédasticité = bp_test$p.value))
+                                                     varianceConstante = varianceConstante))
   rownames(analyseModeles)[nrow(analyseModeles)] <- i
   
   plot(formuleDroite(donnees_modele[[modeles[[i]]$variableDroite]]),
@@ -220,6 +219,35 @@ for (i in seq_along(modeles)) {
   
   abline(a, b, col = "red", lwd = 2)
 }
+
+## ------- d) -------
+
+
+donnesPrediction <- data.frame(X1 = 115, X2 = 35, X3 = 1)
+
+
+numeroModeleChoisi = 1 # À déterminer selon notre analyse
+
+b0 <- analyseModeles$b0[[numeroModeleChoisi]]
+b1 <- analyseModeles$b1[[numeroModeleChoisi]]
+x <- donnesPrediction[[modeles[[numeroModeleChoisi]]$variableDroite]]
+
+prediction <- modeles[[numeroModeleChoisi]]$formule(b0, b1, x)
+
+n <- nrow(donnees_modele)
+formuleDroite <- modeles[[i]]$formuleDroite
+formuleGauche <- modeles[[i]]$formuleGauche
+variableDroite <- formuleDroite(donnees_modele[[modeles[[i]]$variableDroite]])
+variableGauche <- formuleGauche(donnees_modele[[modeles[[i]]$variableGauche]])
+model <- lm(variableGauche ~ variableDroite, data = donnees_modele)
+
+mse <- mean(model$residuals^2)
+xbar <- mean(donnees_modele[[modeles[[numeroModeleChoisi]]$variableDroite]])
+Sxx <- sum((donnees_modele[[modeles[[numeroModeleChoisi]]$variableDroite]] - xbar)^2)
+
+intervalePrediction <- qt(1 - 0.05 / 2, df = n - 2) * sqrt(mse * (1 + 1/n + (x - xbar)^2 / Sxx))
+intervalePrediction - 
+cat("Lower bound", prediction - intervalePrediction, "Upper bound", prediction + intervalePrediction,"Prediction",  prediction)
 
 
 
