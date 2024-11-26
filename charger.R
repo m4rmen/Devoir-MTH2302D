@@ -149,7 +149,7 @@ for (i in seq_along(modeles)) {
   
   ## ------- c) 2: -------
   seuilB0PValue <- 0.05
-  accepteVariance <- analyseVariance[["Pr(>F)"]][1] < seuilPValue
+  accepteVariance <- analyseVariance[["Pr(>F)"]][1] < seuilB0PValue
   accepteVariance
   analyseVariance[["Pr(>F)"]][1]
   
